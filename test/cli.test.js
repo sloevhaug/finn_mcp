@@ -65,6 +65,35 @@ test("CLI flags and JSON produce identical results through the marketplace handl
   assert.ok(result.results.length > 0);
 });
 
+test("CLI maps tractor make, region, and seller names to FINN filter codes", () => {
+  const result = run(
+    [
+      "search_finn_tractors",
+      "--make",
+      "John Deere",
+      "--make",
+      "Valtra",
+      "--region",
+      "Innlandet",
+      "--seller",
+      "Privat",
+      "--engine_effect_from",
+      "100",
+      "--published_today",
+    ],
+    { status: 200, fixture: "test/fixtures/mobility-search-tractor.html" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const url = new URL(JSON.parse(result.stdout).search_url);
+  assert.equal(url.pathname, "/mobility/search/b2b/agriculturetractor");
+  assert.deepEqual(url.searchParams.getAll("make"), ["0.30", "0.8057"]);
+  assert.deepEqual(url.searchParams.getAll("location"), ["0.22034"]);
+  assert.equal(url.searchParams.get("dealer_segment"), "1");
+  assert.equal(url.searchParams.get("engine_effect_from"), "100");
+  assert.equal(url.searchParams.get("published"), "1");
+  assert.equal(run(["search_finn_tractors", "--make", "Tesla"]).status, 1);
+});
+
 test("CLI rejects invalid inputs without printing results", () => {
   for (const args of [
     ["missing"],

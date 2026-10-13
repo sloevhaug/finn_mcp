@@ -18,6 +18,7 @@ for (const [name, tool, total, pages, count] of [
   ["mobility-search-car", "search_finn_cars", 1873, 39, 49],
   ["mobility-search-boat", "search_finn_boats", 32, 1, 32],
   ["mobility-search-car", "search_finn_b2b", 1873, 39, 49],
+  ["mobility-search-tractor", "search_finn_tractors", 2247, 46, 49],
 ]) {
   test(`${tool} separates total matches from returned entries`, async (t) => {
     // B2B uses the same mobility response parser; exercise it with the car payload.

@@ -5,6 +5,7 @@ import { parseMobilityItemDetail, parseMobilitySearchResults } from "../src/mobi
 
 const carSearchHtml = readFileSync(new URL("./fixtures/mobility-search-car.html", import.meta.url), "utf-8");
 const boatSearchHtml = readFileSync(new URL("./fixtures/mobility-search-boat.html", import.meta.url), "utf-8");
+const tractorSearchHtml = readFileSync(new URL("./fixtures/mobility-search-tractor.html", import.meta.url), "utf-8");
 const carDetailHtml = readFileSync(new URL("./fixtures/mobility-item-car.html", import.meta.url), "utf-8");
 const boatDetailHtml = readFileSync(new URL("./fixtures/mobility-item-boat.html", import.meta.url), "utf-8");
 
@@ -27,6 +28,26 @@ describe("parseMobilitySearchResults", () => {
     const first = results[0];
     assert.ok(first.finn_code, "should have finn_code");
     assert.ok(first.heading, "should have heading");
+  });
+
+  it("extracts tractor results with hours used", () => {
+    const results = parseMobilitySearchResults(tractorSearchHtml);
+    assert.equal(results.length, 49);
+    const { image, ...first } = results[0];
+    assert.ok(image, "should have image");
+    assert.deepEqual(first, {
+      finn_code: "478644409",
+      heading: "Tafe 6028 M",
+      location: "Marnardal",
+      price: "129000 NOK",
+      year: 2026,
+      url: "https://www.finn.no/mobility/item/478644409",
+      make: "Tafe",
+      model: "6028 M",
+      fuel: "Diesel",
+      hours_used: 1,
+      dealer_segment: "Forhandler",
+    });
   });
 
   it("rejects unrecognised HTML", () => {

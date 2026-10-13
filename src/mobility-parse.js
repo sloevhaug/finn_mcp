@@ -33,6 +33,9 @@ export function parseMobilitySearchResults(html) {
     if (doc.motor_size) result.motor_size = doc.motor_size;
     if (doc.max_speed) result.max_speed = doc.max_speed;
 
+    // Machinery-specific fields
+    if (doc.hours_used != null) result.hours_used = doc.hours_used;
+
     if (doc.dealer_segment) result.dealer_segment = doc.dealer_segment;
 
     return result;

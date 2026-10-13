@@ -16,6 +16,10 @@ A Model Context Protocol (MCP) server for searching and browsing Norwegian marke
 - **Search** with filters for boat class, length, engine power/type/fuel, year, and price
 - **Item details** with full specs (length, width, speed, engine, materials, etc.)
 
+### FINN.no Tractors
+- **Search** agricultural tractors with filters for make, region, engine power, year, price, seller type, and listings published today
+- Results include hours used; use `get_finn_mobility_item` for full specs
+
 ### FINN.no Holiday Homes
 - **Destination autocomplete** to discover locations and result counts
 - **Property details** including pricing, beds, facilities, house rules, and images
@@ -37,6 +41,7 @@ node src/cli.js search_finn_torget --help
 node src/cli.js search_finn_torget --query "harrington" --price_to 1500 --shipping
 node src/cli.js get_finn_torget_item --finn_code 343932826
 node src/cli.js search_finn_cars --fuel Elektrisk --price_to 300000
+node src/cli.js search_finn_tractors --make "John Deere" --region Innlandet --engine_effect_from 100
 node src/cli.js search_klarna --query "FiiO K11"
 ```
 
@@ -102,13 +107,14 @@ Config file locations:
 - "Search for 'skjorter' on FINN Torget"
 - "Find electric cars under 300k on FINN"
 - "Search for cabincruiser boats over 25 feet"
+- "Find Valtra tractors over 100 hp in Trøndelag"
 - "Find holiday cabins in Lofoten"
 - "Compare prices for Raspberry Pi 4 on Klarna"
 - "Get details for FINN item 343932826"
 
 ## Search result counts
 
-FINN searches (Torget, cars, boats, and B2B) return:
+FINN searches (Torget, cars, boats, tractors, and B2B) return:
 
 - `total_results`: total matches reported by FINN, across pages.
 - `page`: current page reported by FINN.
