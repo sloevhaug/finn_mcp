@@ -75,7 +75,7 @@ test("CLI maps tractor make, region, and seller names to FINN filter codes", () 
       "Valtra",
       "--region",
       "Innlandet",
-      "--seller",
+      "--dealer_segment",
       "Privat",
       "--engine_effect_from",
       "100",
@@ -92,6 +92,28 @@ test("CLI maps tractor make, region, and seller names to FINN filter codes", () 
   assert.equal(url.searchParams.get("engine_effect_from"), "100");
   assert.equal(url.searchParams.get("published"), "1");
   assert.equal(run(["search_finn_tractors", "--make", "Tesla"]).status, 1);
+});
+
+test("CLI maps seller type to each subvertical's dealer_segment codes", () => {
+  const codes = (args) => {
+    const result = run(args, { status: 200, fixture: "test/fixtures/mobility-search-car.html" });
+    assert.equal(result.status, 0, result.stderr);
+    return new URL(JSON.parse(result.stdout).search_url).searchParams.getAll("dealer_segment");
+  };
+  assert.deepEqual(codes(["search_finn_cars", "--dealer_segment", "Forhandler"]), ["1", "2"]);
+  assert.deepEqual(codes(["search_finn_cars", "--dealer_segment", "Privat"]), ["3"]);
+  assert.deepEqual(codes(["search_finn_boats", "--dealer_segment", "Privat"]), ["1"]);
+  for (const subvertical of ["construction", "truck", "bus"]) {
+    const args = ["search_finn_b2b", "--subvertical", subvertical, "--dealer_segment"];
+    assert.deepEqual(codes([...args, "Forhandler"]), ["2"]);
+    assert.deepEqual(codes([...args, "Privat"]), ["3"]);
+  }
+  for (const subvertical of ["agriculturetractor", "agriculturecombines", "agriculturetools"]) {
+    const args = ["search_finn_b2b", "--subvertical", subvertical, "--dealer_segment"];
+    assert.deepEqual(codes([...args, "Forhandler"]), ["0"]);
+    assert.deepEqual(codes([...args, "Privat"]), ["1"]);
+  }
+  assert.equal(run(["search_finn_cars", "--dealer_segment", "privat"]).status, 1);
 });
 
 test("CLI rejects invalid inputs without printing results", () => {

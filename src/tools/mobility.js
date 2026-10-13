@@ -3,6 +3,17 @@ import { fetchHtml } from "../fetch.js";
 import { parseFinnSearchPaging } from "../finn-search-data.js";
 import { parseMobilityItemDetail, parseMobilitySearchResults } from "../mobility-parse.js";
 
+// FINN's dealer_segment codes differ per subvertical; cars split dealers into two codes.
+const DEALER_SEGMENT_CODES = {
+  car: { Forhandler: ["1", "2"], Privat: ["3"] },
+  "b2b/construction": { Forhandler: ["2"], Privat: ["3"] },
+  "b2b/truck": { Forhandler: ["2"], Privat: ["3"] },
+  "b2b/bus": { Forhandler: ["2"], Privat: ["3"] },
+};
+const DEFAULT_DEALER_SEGMENT_CODES = { Forhandler: ["0"], Privat: ["1"] };
+
+const dealerSegmentSchema = z.enum(["Privat", "Forhandler"]).optional().describe("Seller type");
+
 function buildSearchUrl(subvertical, args, extraParams) {
   const params = new URLSearchParams();
   if (args.query) params.append("q", args.query);
@@ -12,7 +23,10 @@ function buildSearchUrl(subvertical, args, extraParams) {
   if (args.price_to) params.append("price_to", args.price_to.toString());
   if (args.year_from) params.append("year_from", args.year_from.toString());
   if (args.year_to) params.append("year_to", args.year_to.toString());
-  if (args.dealer_segment) params.append("dealer_segment", args.dealer_segment);
+  if (args.dealer_segment) {
+    const codes = DEALER_SEGMENT_CODES[subvertical] ?? DEFAULT_DEALER_SEGMENT_CODES;
+    for (const code of codes[args.dealer_segment]) params.append("dealer_segment", code);
+  }
   if (extraParams) {
     for (const [k, v] of Object.entries(extraParams)) {
       for (const item of [v].flat()) {
@@ -104,8 +118,6 @@ const REGIONS = {
   Østfold: "0.20002",
 };
 
-const DEALER_SEGMENTS = { Forhandler: "0", Privat: "1" };
-
 async function searchMobility(subvertical, args, extraParams) {
   const url = buildSearchUrl(subvertical, args, extraParams);
   const html = await fetchHtml(url);
@@ -145,7 +157,7 @@ export function registerMobilityTools(server) {
         body_type: z.string().optional().describe("Body type (e.g. 'SUV', 'Sedan', 'Stasjonsvogn')"),
         transmission: z.string().optional().describe("Transmission ('Automat' or 'Manuell')"),
         wheel_drive: z.string().optional().describe("Wheel drive ('Firehjulsdrift', 'Forhjulsdrift', 'Bakhjulsdrift')"),
-        dealer_segment: z.string().optional().describe("Seller type ('Privat' or 'Forhandler')"),
+        dealer_segment: dealerSegmentSchema,
       },
     },
     async (args) => {
@@ -189,7 +201,7 @@ export function registerMobilityTools(server) {
         class: z.string().optional().describe("Boat class (e.g. 'Cabincruiser', 'Seilbåt', 'RIB', 'Daycruiser')"),
         motor_type: z.string().optional().describe("Engine type ('Innenbords' or 'Utenbords')"),
         motor_fuel: z.string().optional().describe("Fuel type ('Bensin', 'Diesel', 'El')"),
-        dealer_segment: z.string().optional().describe("Seller type ('Privat' or 'Forhandler')"),
+        dealer_segment: dealerSegmentSchema,
       },
     },
     async (args) => {
@@ -237,7 +249,7 @@ export function registerMobilityTools(server) {
         year_to: z.coerce.number().optional().describe("Maximum model year"),
         engine_effect_from: z.coerce.number().optional().describe("Minimum engine power (HP)"),
         engine_effect_to: z.coerce.number().optional().describe("Maximum engine power (HP)"),
-        dealer_segment: z.string().optional().describe("Seller type ('Privat' or 'Forhandler')"),
+        dealer_segment: dealerSegmentSchema,
         construction_segment: z
           .string()
           .optional()
@@ -293,7 +305,7 @@ export function registerMobilityTools(server) {
           .array(z.enum(Object.keys(REGIONS)))
           .optional()
           .describe("County/region(s)"),
-        seller: z.enum(Object.keys(DEALER_SEGMENTS)).optional().describe("Seller type"),
+        dealer_segment: dealerSegmentSchema,
         published_today: z.boolean().optional().describe("Only listings published today"),
       },
     },
@@ -304,7 +316,6 @@ export function registerMobilityTools(server) {
           engine_effect_to: args.engine_effect_to,
           make: args.make?.map((make) => TRACTOR_MAKES[make]),
           location: args.region?.map((region) => REGIONS[region]),
-          dealer_segment: args.seller && DEALER_SEGMENTS[args.seller],
           published: args.published_today ? 1 : undefined,
         };
         const data = await searchMobility("b2b/agriculturetractor", args, extra);
